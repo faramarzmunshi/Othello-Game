@@ -1,6 +1,6 @@
 """Author: Faramarz Munshi CS271
-TODO: 1. write a function to determine if goal state has been reached (is_goal_state())
-      2. rewrite "get_best_move()" to use minimax rather than random chance!
+TODO:
+      1. Rewrite "get_best_move()" to use minimax rather than random chance!
 """
 
 import matplotlib.pyplot as plt
@@ -50,6 +50,7 @@ class Othello():
             Args:
                 x: x coordinate of the move desired to make
                 y: y coordinate of the move desired to make
+            Does not return anything! This should only be used to update the MAIN GAME BOARD.
         """
         # make a tuple move as concatenation of x and y
         move = (x,y)
@@ -58,7 +59,14 @@ class Othello():
         valid_moves = self.get_valid_moves()
         
         # if there are no valid moves, change turn to other person's turn
-        
+        if is_goal_state():
+        	print "Game Over!"
+        	white, black = get_score()
+        	if white > black:
+        		print "White wins!"
+        	if black > white:
+        		print "Black wins!"
+
         if not valid_moves:
             print("No moves remaining! Changing to other person's turn :(")
             if self.turn == b'b':
@@ -75,7 +83,7 @@ class Othello():
                 # with the move, and swap the turn to the other person
                 if self.turn==self.AI:
                     print("AI Moved.")
-                    self.update_board(x, y)
+                    self.board_state = self.update_board(x, y)
                     print("Your turn!")
                     if self.turn == b'b':
                         self.turn = b'w'
@@ -86,7 +94,7 @@ class Othello():
 
                 elif self.turn != self.AI:
                     print("You moved.")
-                    self.update_board(x, y)
+                    self.board_state = self.update_board(x, y)
                     print("AI Turn!")
 
                     # find the best move the computer can make
@@ -96,20 +104,45 @@ class Othello():
                 else:
                     print('Something went seriously wrong to get here.')
         
-    
-    def update_board(self, x, y):
+    def get_score(self, board_state = self.board_state):
+    	""" Get the current scores for white and black and return them
+    		Args:
+    			board_state = the current or inputted board state for which to find score
+    		Returns:
+    			white = number of white pieces
+    			black = number of black pieces
+    	"""
+
+    	white = 0
+    	black = 0
+    	for i in board_state:
+    		for j in board_state[i]:
+    			# Iterate through all board positions and increment a counter for white and black
+
+    			if board_state[i][j] == b'w':
+    				white+=1
+    			elif board_state[i][j] == b'b':
+    				black+=1
+    			else:
+    				continue
+
+    	return white, black
+
+    def update_board(self, x, y, board_state = self.board_state, turn=self.turn):
         """ Update the board with the new move and all of the changes
             that happen as a result of the move
             Args:
                 x: x position of the move
                 y: y position of the move
+            Returns:
+            	board_state: updated state of the board after the move.
         """
         
         # Define the eight vectors you can move from one square
         directions = [(0,1),(0,-1),(1,0),(1,1),(1,-1),(-1,0),(-1,-1),(-1, 1)]
         
         # Figure out whose turn it is
-        self.board_state[x][y] = self.turn
+        board_state[x][y] = turn
         
         # Find out which directions need to be updated to a different colour
         need_to_be_updated = []
@@ -127,17 +160,17 @@ class Othello():
             
             # Check if the spot is out of bounds of the board, then whether
             # the colour of this next square in direction d is of the opposite colour
-            if not self.isOOB(*check_spot) and self.board_state[check_spot[0]][check_spot[1]] != self.turn and self.board_state[check_spot[0]][check_spot[1]] != b'e':
+            if not self.isOOB(*check_spot) and board_state[check_spot[0]][check_spot[1]] != turn and board_state[check_spot[0]][check_spot[1]] != b'e':
                 # Keep moving in the direction d, checking if it's OOB and what colour it is
                 check_spot = tuple(map(sum, zip((check_spot[0],check_spot[1]),d)))
     
                 may_need_to_be_updated.append(check_spot)
                 while not self.isOOB(*check_spot) and not move_found:
-                    check_spot_colour = self.board_state[check_spot[0]][check_spot[1]]
+                    check_spot_colour = board_state[check_spot[0]][check_spot[1]]
                     # If the next next or next*3... spot in the direction is the same colour as
                     # whose turn it is, we know that's the end of the move and can update all
                     # of their colours
-                    if check_spot_colour == self.turn:
+                    if check_spot_colour == turn:
                         move_found = True
                         # get out of the while loop and change the may need to be updated
                         # into definitely need to be updated
@@ -157,11 +190,12 @@ class Othello():
             else:
                 continue
         for i, j in need_to_be_updated:
-            self.board_state[i][j] = self.turn
+            board_state[i][j] = turn
         
         print(self)
+        return board_state
     
-    def get_valid_moves(self):
+    def get_valid_moves(self, board_state=self.board_state, turn = self.turn):
         """ Check current board state and see what moves are valid
         """
         
@@ -170,14 +204,14 @@ class Othello():
         valid_moves = []
         
         # Set the x_bound and y_Bound to how big the board is
-        y_bound = self.board_state.shape[1]
-        x_bound = self.board_state.shape[0]
+        y_bound = board_state.shape[1]
+        x_bound = board_state.shape[0]
         
         # Iterate through the board finding empty positions and from every
         # empty position, search through the directions for the same colour
         for i in range(0, x_bound):
             for j in range(0, y_bound):
-                if self.board_state[i][j] == b'e':
+                if board_state[i][j] == b'e':
                     # search all directions for each empty spot
                     for d in directions:
                         move_found = False
@@ -186,13 +220,13 @@ class Othello():
                         
                         # Check if the spot is out of bounds of the board, then whether
                         # the colour of this next square in direction d is of the opposite colour
-                        if not self.isOOB(*check_spot) and self.board_state[check_spot[0]][check_spot[1]] != self.turn and self.board_state[check_spot[0]][check_spot[1]] != b'e':
+                        if not self.isOOB(*check_spot) and board_state[check_spot[0]][check_spot[1]] != turn and board_state[check_spot[0]][check_spot[1]] != b'e':
                             check_spot = tuple(map(sum, zip((check_spot[0],check_spot[1]),d)))
                             # Keep moving in the direction d, checking if it's OOB and what colour it is
                             
                             while not self.isOOB(*check_spot) and not move_found:
-                                check_spot_colour = self.board_state[check_spot[0]][check_spot[1]]
-                                if check_spot_colour == self.turn:
+                                check_spot_colour = board_state[check_spot[0]][check_spot[1]]
+                                if check_spot_colour == turn:
                                     move_found = True
                                     # If the next next or next*3... spot in the direction is the same colour as
                                     # whose turn it is, we know that's the end of the move and can add the move
@@ -211,12 +245,42 @@ class Othello():
         
         # return all the valid moves we gathered
         return valid_moves
+
+    def is_goal_state(self, board_state=self.board_state, turn=self.turn):
+    	""" Checks if goal state has been reached by checkign for valid moves, then swapping
+    		turn and checking if the other player has any valid moves.
+    		Args:
+    			board_state = board state of the game or whatever board state you want
+    			turn = whoever's turn you want to check first
+    	"""
+
+    	valid_moves = get_valid_moves(board_state=board_state, turn=turn)
+    	if valid_moves:
+    		return False
+    	else:
+    		if turn = b'w':
+    			turn = b'b'
+    			valid_moves = get_valid_moves(board_state=board_state, turn=turn)
+    			if valid_moves:
+    				return False
+    			else:
+    				return True
+    		else:
+    			turn = b'w'
+    			valid_moves = get_valid_moves(board_state=board_state, turn=turn)
+    			if valid_moves:
+    				return False
+    			else:
+    				return True
         
     def isOOB(self, x, y):
         """Given an x and y, check if the coordinates are inbounds or out
             Args:
                 x: the x coordinate of the move
                 y: the y coordinate of the move
+            Returns:
+            	True if out of bounds of board
+            	False if in bounds of board
         """
         
         y_bound = self.board_state.shape[1]
@@ -241,7 +305,9 @@ class Othello():
         return to_return
     def __str__(self):
         """ Print 'Game of Othello' and then display the current board state
-            with pyplot"""
+            with pyplot
+        """
+        
         to_return = 'Game of Othello'
 
         # Figure out board bounds
