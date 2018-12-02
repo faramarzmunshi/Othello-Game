@@ -57,15 +57,6 @@ class Othello():
         
         # get a list of all the valid moves at this board state
         valid_moves = self.get_valid_moves()
-        
-        # if there are no valid moves, change turn to other person's turn
-        if self.is_goal_state():
-            print ("Game Over!")
-            white, black = self.get_score()
-            if white > black:
-                print ("White wins!")
-            if black > white:
-                print ("Black wins!")
 
         if not valid_moves:
             print("No moves remaining! Changing to other person's turn :(")
@@ -103,6 +94,15 @@ class Othello():
                     self.do_turn(new_x, new_y)   
                 else:
                     print('Something went seriously wrong to get here.')
+
+        # if there are no valid moves, change turn to other person's turn
+        if self.is_goal_state():
+            print ("Game Over!")
+            white, black = self.get_score()
+            if white > black:
+                print ("White wins!")
+            if black > white:
+                print ("Black wins!")
         
     def get_score(self, board_state = None):
         """ Get the current scores for white and black and return them
@@ -116,8 +116,8 @@ class Othello():
             board_state = self.board_state
         white = 0
         black = 0
-        for i in board_state:
-            for j in board_state[i]:
+        for i in range(len(board_state)):
+            for j in range(len(board_state[i])):
                 # Iterate through all board positions and increment a counter for white and black
 
                 if board_state[i][j] == b'w':
@@ -126,7 +126,8 @@ class Othello():
                     black+=1
                 else:
                     continue
-
+        print ("Score of White: ", white)
+        print ("Score of Black: ", black)
         return white, black
 
     def update_board(self, x, y, board_state = None, turn=None):
