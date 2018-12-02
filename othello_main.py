@@ -59,13 +59,13 @@ class Othello():
         valid_moves = self.get_valid_moves()
         
         # if there are no valid moves, change turn to other person's turn
-        if is_goal_state():
-        	print "Game Over!"
-        	white, black = get_score()
-        	if white > black:
-        		print "White wins!"
-        	if black > white:
-        		print "Black wins!"
+        if self.is_goal_state():
+            print ("Game Over!")
+            white, black = self.get_score()
+            if white > black:
+                print ("White wins!")
+            if black > white:
+                print ("Black wins!")
 
         if not valid_moves:
             print("No moves remaining! Changing to other person's turn :(")
@@ -104,41 +104,47 @@ class Othello():
                 else:
                     print('Something went seriously wrong to get here.')
         
-    def get_score(self, board_state = self.board_state):
-    	""" Get the current scores for white and black and return them
-    		Args:
-    			board_state = the current or inputted board state for which to find score
-    		Returns:
-    			white = number of white pieces
-    			black = number of black pieces
-    	"""
+    def get_score(self, board_state = None):
+        """ Get the current scores for white and black and return them
+            Args:
+                board_state = the current or inputted board state for which to find score
+            Returns:
+                white = number of white pieces
+                black = number of black pieces
+        """
+        if not type(board_state) == np.chararray:
+            board_state = self.board_state
+        white = 0
+        black = 0
+        for i in board_state:
+            for j in board_state[i]:
+                # Iterate through all board positions and increment a counter for white and black
 
-    	white = 0
-    	black = 0
-    	for i in board_state:
-    		for j in board_state[i]:
-    			# Iterate through all board positions and increment a counter for white and black
+                if board_state[i][j] == b'w':
+                    white+=1
+                elif board_state[i][j] == b'b':
+                    black+=1
+                else:
+                    continue
 
-    			if board_state[i][j] == b'w':
-    				white+=1
-    			elif board_state[i][j] == b'b':
-    				black+=1
-    			else:
-    				continue
+        return white, black
 
-    	return white, black
-
-    def update_board(self, x, y, board_state = self.board_state, turn=self.turn):
+    def update_board(self, x, y, board_state = None, turn=None):
         """ Update the board with the new move and all of the changes
             that happen as a result of the move
             Args:
                 x: x position of the move
                 y: y position of the move
             Returns:
-            	board_state: updated state of the board after the move.
+                board_state: updated state of the board after the move.
         """
-        
+        if not type(board_state) == np.chararray:
+            board_state = self.board_state
+        if not turn:
+            turn = self.turn
+
         # Define the eight vectors you can move from one square
+
         directions = [(0,1),(0,-1),(1,0),(1,1),(1,-1),(-1,0),(-1,-1),(-1, 1)]
         
         # Figure out whose turn it is
@@ -195,11 +201,15 @@ class Othello():
         print(self)
         return board_state
     
-    def get_valid_moves(self, board_state=self.board_state, turn = self.turn):
+    def get_valid_moves(self, board_state=None, turn = None):
         """ Check current board state and see what moves are valid
         """
         
         # Define the eight vectors you can move from one square
+        if not type(board_state) == np.chararray:
+            board_state = self.board_state
+        if not turn:
+            turn = self.turn
         directions = [(0,1),(0,-1),(1,0),(1,1),(1,-1),(-1,0),(-1,-1),(-1, 1)]
         valid_moves = []
         
@@ -246,32 +256,35 @@ class Othello():
         # return all the valid moves we gathered
         return valid_moves
 
-    def is_goal_state(self, board_state=self.board_state, turn=self.turn):
-    	""" Checks if goal state has been reached by checkign for valid moves, then swapping
-    		turn and checking if the other player has any valid moves.
-    		Args:
-    			board_state = board state of the game or whatever board state you want
-    			turn = whoever's turn you want to check first
-    	"""
-
-    	valid_moves = get_valid_moves(board_state=board_state, turn=turn)
-    	if valid_moves:
-    		return False
-    	else:
-    		if turn = b'w':
-    			turn = b'b'
-    			valid_moves = get_valid_moves(board_state=board_state, turn=turn)
-    			if valid_moves:
-    				return False
-    			else:
-    				return True
-    		else:
-    			turn = b'w'
-    			valid_moves = get_valid_moves(board_state=board_state, turn=turn)
-    			if valid_moves:
-    				return False
-    			else:
-    				return True
+    def is_goal_state(self, board_state=None, turn=None):
+        """ Checks if goal state has been reached by checkign for valid moves, then swapping
+            turn and checking if the other player has any valid moves.
+            Args:
+                board_state = board state of the game or whatever board state you want
+                turn = whoever's turn you want to check first
+        """
+        if not type(board_state) == np.chararray:
+            board_state = self.board_state
+        if not turn:
+            turn = self.turn
+        valid_moves = self.get_valid_moves(board_state=board_state, turn=turn)
+        if valid_moves:
+            return False
+        else:
+            if turn == b'w':
+                turn = b'b'
+                valid_moves = self.get_valid_moves(board_state=board_state, turn=turn)
+                if valid_moves:
+                    return False
+                else:
+                    return True
+            else:
+                turn = b'w'
+                valid_moves = self.get_valid_moves(board_state=board_state, turn=turn)
+                if valid_moves:
+                    return False
+                else:
+                    return True
         
     def isOOB(self, x, y):
         """Given an x and y, check if the coordinates are inbounds or out
@@ -279,8 +292,8 @@ class Othello():
                 x: the x coordinate of the move
                 y: the y coordinate of the move
             Returns:
-            	True if out of bounds of board
-            	False if in bounds of board
+                True if out of bounds of board
+                False if in bounds of board
         """
         
         y_bound = self.board_state.shape[1]
@@ -342,4 +355,5 @@ class Othello():
         plt.grid(True)
         # Make sure the axis is correctly scaled
         plt.axis([-.5,7.5,-.5,7.5])
+        plt.show()
         return to_return
