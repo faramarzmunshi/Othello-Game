@@ -91,7 +91,8 @@ class Othello():
                     # find the best move the computer can make
                     self.turn = self.AI
                     new_x, new_y = self.get_best_move()
-                    self.do_turn(new_x, new_y)   
+                    if (new_x,new_y is not None):
+                        self.do_turn(new_x, new_y)   
                 else:
                     print('Something went seriously wrong to get here.')
 
@@ -309,9 +310,11 @@ class Othello():
         # Filler at the moment, designed to get a random valid move and play
         import random
         valid_moves = self.get_valid_moves()
-        move = random.randint(0,len(valid_moves)-1)
-        print(valid_moves[move])
-        return valid_moves[move]
+        if(len(valid_moves) > 0):
+            move = random.randint(0,len(valid_moves)-1)
+            print(valid_moves[move])
+            return valid_moves[move]
+        return 
     
     def __repr__(self):
         to_return = 'Game of Othello with board position:\n {0}'.format(self.board_state)
