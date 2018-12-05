@@ -1,6 +1,6 @@
 """Author: Faramarz Munshi CS271
 TODO:
-      1. Rewrite "get_best_move()" to use minimax rather than random chance!
+      1. Make Graphics look better :)
 """
 
 import matplotlib.pyplot as plt
@@ -8,7 +8,7 @@ import numpy as np
 
 class Othello():    
     
-    def __init__(self, turn, board_state, AI):
+    def __init__(self, turn, board_state, AI, MAX_DEPTH=1):
         """" Initialize the board and state of the game
             Args:
                 turn: Whether it is white or black's turn
@@ -16,6 +16,7 @@ class Othello():
                 and 'e' for empty representing the current board state. 
                 AI: whether white or black is the AI
         """
+        self.MAX_DEPTH = MAX_DEPTH
         # If the board state is given at instantiation, set it as the current
         # board state, otherwise instantiate normal starting position
         
@@ -90,9 +91,9 @@ class Othello():
 
                     # find the best move the computer can make
                     self.turn = self.AI
-                    new_x, new_y = self.get_best_move()
-                    if (new_x,new_y is not None):
-                        self.do_turn(new_x, new_y)   
+                    move = self.get_best_move()
+                    if (move is not None):
+                        self.do_turn(move[0], move[1])   
                 else:
                     print('Something went seriously wrong to get here.')
 
@@ -127,8 +128,6 @@ class Othello():
                     black+=1
                 else:
                     continue
-        print ("Score of White: ", white)
-        print ("Score of Black: ", black)
         return white, black
 
     def update_board(self, x, y, board_state = None, turn=None):
@@ -142,6 +141,9 @@ class Othello():
         """
         if not type(board_state) == np.chararray:
             board_state = self.board_state
+            to_print = True
+        else:
+            to_print = False
         if not turn:
             turn = self.turn
 
@@ -200,7 +202,8 @@ class Othello():
         for i, j in need_to_be_updated:
             board_state[i][j] = turn
         
-        print(self)
+        if to_print:
+            print(self)
         return board_state
     
     def get_valid_moves(self, board_state=None, turn = None):
@@ -255,8 +258,8 @@ class Othello():
                 else:
                     continue
         
-        # return all the valid moves we gathered
-        return valid_moves
+        # return all the valid moves we gathered and deduplicate
+        return list(set(valid_moves))
 
     def is_goal_state(self, board_state=None, turn=None):
         """ Checks if goal state has been reached by checkign for valid moves, then swapping
@@ -307,14 +310,113 @@ class Othello():
             
     
     def get_best_move(self):
-        # Filler at the moment, designed to get a random valid move and play
-        import random
-        valid_moves = self.get_valid_moves()
-        if(len(valid_moves) > 0):
-            move = random.randint(0,len(valid_moves)-1)
-            print(valid_moves[move])
-            return valid_moves[move]
-        return 
+        """ Standard Minimax Algorithm 
+            Args: None
+            Returns:
+                best_move: best move based on score and minimaxing
+        """
+        import copy
+        # Create a copy of the world so we don't affect the main board
+        start_state = copy.deepcopy(self.board_state)
+        # Call max_value on the current state of the board
+        best_val, best_move = self.max_value(start_state)
+
+        # Return the best move
+        print("Best move found was: ", best_move)
+        return best_move
+
+    def max_value(self, board_state, depth=0):
+        """ Returns the max value at a specific depth, iteratively calls min_value.
+            Args:
+                board_state: state of the game you want to maximize
+                depth: how far deep into the tree we want to go
+            Returns:
+                Can return 2 different outputs depending on depth
+                if depth is 0, it returns the best move and the max value
+                otherwise it just returns the max value
+        """
+        # Check if goal state has been reached or the max_depth we want to traverse has been
+        # reached, if so, return the score as if it were a child node.
+
+        if self.is_goal_state(board_state) or depth >= self.MAX_DEPTH:
+            white, black = self.get_score(board_state)
+            if self.AI==b'w':
+                score = white-black
+            if self.AI==b'b':
+                score = black-white
+            return score
+
+        # Default max value is negative infinity for any new node
+        infinity = float('inf')
+        max_value = -infinity
+
+        # check which moves are valid for the AI to maximize
+        successor_moves = self.get_valid_moves(board_state=board_state, turn=self.AI)
+        max_values = []
+
+        # iterate through all the moves 
+        for move in successor_moves:
+            x = move[0]
+            y = move[1]
+            # create a new board state after each move happened, and call min_value on the
+            # next turn to minimize the players gain.
+            new_board_state = self.update_board(x, y, board_state=board_state, turn=self.AI)
+            max_values.append(self.min_value(board_state=new_board_state, depth=depth+1))
+            # check if max_values is last entry on the list, and if it is, assign best_move
+            # as that move
+            if max(max_values) == max_values[-1]:
+                best_move = move
+        # check how deep we are into the tree, if we are at surface depth, return the best move
+        # and the max value of that move, otherwise return the max value we found
+        if depth==0:
+            return max(max_values), best_move
+        else:
+            return max(max_values)
+
+    def min_value(self, board_state, depth=0):
+        """ Returns the min value at a specific depth, iteratively calls max_value.
+            Args:
+                board_state: state of the game you want to minimize
+                depth: how far deep into the tree we want to go
+            Returns:
+                min_value: minimum value of node at depth
+        """
+        # Check if goal state has been reached or the max_depth we want to traverse has been
+        # reached, if so, return the score as if it were a child node.
+
+        if self.is_goal_state(board_state) or depth >= self.MAX_DEPTH:
+            white, black = self.get_score(board_state)
+            if self.AI==b'w':
+                score = white-black
+            if self.AI==b'b':
+                score = black-white
+            return score
+
+        # Default min value is infinity for any new node
+
+        infinity = float('inf')
+        min_value = infinity
+        
+        # Set the turn to be the human person's turn, so we can test all possible moves
+        # he/she can do
+        if self.AI == b'w':
+            turn = b'b'
+        elif self.AI == b'b':
+            turn = b'w'
+
+        # get all the moves that the human person could possibly do
+        successor_moves = self.get_valid_moves(board_state=board_state, turn=turn)
+
+        # iterate through all of them and find which minimizes their score
+        for move in successor_moves:
+            x = move[0]
+            y = move[1]
+            # create a new board state for every move and find the minimum out of all of them
+            new_board_state = self.update_board(x, y, board_state=board_state, turn=turn)
+            min_value = min(min_value, self.max_value(board_state=new_board_state, depth=depth+1))
+        
+        # return the minimum value
+        return min_value
     
     def __repr__(self):
         to_return = 'Game of Othello with board position:\n {0}'.format(self.board_state)
