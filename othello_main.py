@@ -8,7 +8,7 @@ import numpy as np
 
 class Othello():    
     
-    def __init__(self, turn, board_state, AI, MAX_DEPTH=1):
+    def __init__(self, turn, board_state, AI, MAX_DEPTH=10):
         """" Initialize the board and state of the game
             Args:
                 turn: Whether it is white or black's turn
@@ -45,6 +45,20 @@ class Othello():
             self.AI = AI
         else:
             self.AI = b'w'
+
+        print("""Welcome to the Game of Othello! Your configurations are as follows: 
+                1. It is {0}\'s turn first with the AI playing as {1}
+                2. Max depth of the tree for minimax with alpha beta pruning is {2}.
+                
+                The white are white pieces, black are blacks, and the X's are the
+                moves you or the AI can make on that turn.
+                (0,0) is the bottom left of the board. Please do a turn by using
+                the do_turn(x, y) method where x is the x coordinate, and y is the y
+                coordinate of the move you would like to make.
+                The board will refresh twice every do_turn iteration, once for the human's
+                turn and once for the AI. Good Luck!
+                """.format(turn, AI, MAX_DEPTH))
+        print(self)
     
     def do_turn(self, x, y):
         """ Do a single black or white turn
@@ -60,7 +74,7 @@ class Othello():
         valid_moves = self.get_valid_moves()
 
         if not valid_moves:
-            print("No moves remaining! Changing to other person's turn :(")
+            print("No moves are valid! Swapping to the other's turn.")
             if self.turn == b'b':
                     self.turn = b'w'
             else:
@@ -69,12 +83,11 @@ class Othello():
             # Check if the move that the person is trying to make is valid
 
             if move not in valid_moves:
-                print("Move not valid!")
+                print("Inputted move not valid!")
             else:
                 # If the move is valid, and it's the AI's turn, update the board
                 # with the move, and swap the turn to the other person
                 if self.turn==self.AI:
-                    print("AI Moved.")
                     self.board_state = self.update_board(x, y)
                     print("Your turn!")
                     if self.turn == b'b':
@@ -85,9 +98,9 @@ class Othello():
                 # with the new move and switch to AI's turn
 
                 elif self.turn != self.AI:
-                    print("You moved.")
+                    print("You moved!")
                     self.board_state = self.update_board(x, y)
-                    print("AI Turn!")
+                    print("AI\'s Turn!")
 
                     # find the best move the computer can make
                     self.turn = self.AI
@@ -318,14 +331,17 @@ class Othello():
         import copy
         # Create a copy of the world so we don't affect the main board
         start_state = copy.deepcopy(self.board_state)
+        infinity = float('inf')
+        best_val = -infinity
+        beta = infinity
         # Call max_value on the current state of the board
-        best_val, best_move = self.max_value(start_state)
+        best_move, best_val = self.max_value(start_state, best_val, beta)
 
         # Return the best move
-        print("Best move found was: ", best_move)
+        print("The AI concluded that {0} is the best move.".format(best_move))
         return best_move
 
-    def max_value(self, board_state, depth=0):
+    def max_value(self, board_state, alpha, beta, depth=0):
         """ Returns the max value at a specific depth, iteratively calls min_value.
             Args:
                 board_state: state of the game you want to maximize
@@ -345,14 +361,12 @@ class Othello():
             if self.AI==b'b':
                 score = black-white
             return score
-
         # Default max value is negative infinity for any new node
         infinity = float('inf')
-        max_value = -infinity
-
+        value = -infinity
+        max_values = []
         # check which moves are valid for the AI to maximize
         successor_moves = self.get_valid_moves(board_state=board_state, turn=self.AI)
-        max_values = []
 
         # iterate through all the moves 
         for move in successor_moves:
@@ -361,19 +375,32 @@ class Othello():
             # create a new board state after each move happened, and call min_value on the
             # next turn to minimize the players gain.
             new_board_state = self.update_board(x, y, board_state=board_state, turn=self.AI)
-            max_values.append(self.min_value(board_state=new_board_state, depth=depth+1))
+            value = max(value, self.min_value(new_board_state, alpha, beta, depth=depth+1))
+            if value >= beta and depth != 0:
+                return value
+            if value >= beta and depth == 0:
+                return move, value
+            alpha = max(alpha, value)
+            max_values.append(self.min_value(new_board_state, alpha, beta, depth=depth+1))
+            if max_values[-1] >= beta and depth != 0:
+                return max_values[-1]
+            if max_values[-1] >= beta and depth==0:
+                return move, max_values[-1]
+            alpha = max(alpha, max_values[-1])
             # check if max_values is last entry on the list, and if it is, assign best_move
             # as that move
             if max(max_values) == max_values[-1]:
                 best_move = move
         # check how deep we are into the tree, if we are at surface depth, return the best move
         # and the max value of that move, otherwise return the max value we found
-        if depth==0:
-            return max(max_values), best_move
-        else:
+        if depth==0 and max_values:
+            return best_move, max(max_values)
+        elif depth != 0 and max_values:
             return max(max_values)
+        else:
+            return value
 
-    def min_value(self, board_state, depth=0):
+    def min_value(self, board_state, alpha, beta, depth=0):
         """ Returns the min value at a specific depth, iteratively calls max_value.
             Args:
                 board_state: state of the game you want to minimize
@@ -395,7 +422,7 @@ class Othello():
         # Default min value is infinity for any new node
 
         infinity = float('inf')
-        min_value = infinity
+        value = infinity
         
         # Set the turn to be the human person's turn, so we can test all possible moves
         # he/she can do
@@ -413,10 +440,13 @@ class Othello():
             y = move[1]
             # create a new board state for every move and find the minimum out of all of them
             new_board_state = self.update_board(x, y, board_state=board_state, turn=turn)
-            min_value = min(min_value, self.max_value(board_state=new_board_state, depth=depth+1))
+            value = min(value, self.max_value(new_board_state, alpha, beta, depth=depth+1))
+            if value <= alpha:
+                return value
+            beta = min(beta,value)
         
         # return the minimum value
-        return min_value
+        return value
     
     def __repr__(self):
         to_return = 'Game of Othello with board position:\n {0}'.format(self.board_state)
@@ -426,8 +456,9 @@ class Othello():
         """ Print 'Game of Othello' and then display the current board state
             with pyplot
         """
-        
-        to_return = 'Game of Othello'
+        valid_moves = self.get_valid_moves()
+
+        to_return = 'Game of Othello; Current Valid Moves are: ' + str(valid_moves)
 
         # Figure out board bounds
         y_bound = self.board_state.shape[1]
@@ -444,7 +475,7 @@ class Othello():
         ax.set_xticklabels([])
 
         # set the colour of the background to green
-        ax.set_facecolor('green')
+        ax.set_facecolor('forestgreen')
 
         # Fill in all the black squares with a black dot, white with a white dot
         for i in range(0, x_bound):
@@ -456,6 +487,9 @@ class Othello():
                     if colour==b'b':
                         colour = 'black'
                     plt.plot(i, j, marker='o', color=colour, markersize=20)
+                else:
+                    if (i,j) in valid_moves:
+                        plt.plot(i,j, marker='x', color='plum', markersize=23)
 
         # Make sure to display the grid so you can see the spaces clearly demarcated
         plt.grid(True)
