@@ -33,8 +33,8 @@ class Othello():
         # If whose turn is given at instantiation, set it, otherwise default
         # to black
         
-        if turn== b'w' or turn== b'b':
-            self.turn=turn
+        if turn == b'w' or turn== b'b':
+            self.turn = turn
         else:
             self.turn = b'b'
         
@@ -46,7 +46,9 @@ class Othello():
         else:
             self.AI = b'w'
 
-        if turn == self.AI:
+        print(self)
+
+        if self.turn == self.AI:
             moves = self.get_valid_moves()
             import random
             rand_index = random.randint(0, len(moves)-1)
@@ -64,7 +66,6 @@ class Othello():
                 The board will refresh twice every do_turn iteration, once for the human's
                 turn and once for the AI. Good Luck!
                 """.format(turn, AI, MAX_DEPTH))
-        print(self)
     
     def do_turn(self, x, y):
         """ Do a single black or white turn
@@ -95,7 +96,6 @@ class Othello():
                 # with the move, and swap the turn to the other person
                 if self.turn==self.AI:
                     self.board_state = self.update_board(x, y)
-                    print("Your turn!")
                     if self.turn == b'b':
                         self.turn = b'w'
                     else:
@@ -124,6 +124,7 @@ class Othello():
                 print ("White wins!")
             if black > white:
                 print ("Black wins!")
+        print(self)
         
     def get_score(self, board_state = None):
         """ Get the current scores for white and black and return them
@@ -160,9 +161,7 @@ class Othello():
         """
         if not type(board_state) == np.chararray:
             board_state = self.board_state
-            to_print = True
-        else:
-            to_print = False
+
         if not turn:
             turn = self.turn
 
@@ -221,8 +220,6 @@ class Othello():
         for i, j in need_to_be_updated:
             board_state[i][j] = turn
         
-        if to_print:
-            print(self)
         return board_state
     
     def get_valid_moves(self, board_state=None, turn = None):
