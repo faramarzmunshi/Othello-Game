@@ -360,7 +360,7 @@ class Othello():
                 score = white-black
             if self.AI==b'b':
                 score = black-white
-            return score
+            return (0,0), score
         # Default max value is negative infinity for any new node
         infinity = float('inf')
         value = -infinity
@@ -377,13 +377,13 @@ class Othello():
             new_board_state = self.update_board(x, y, board_state=board_state, turn=self.AI)
             value = max(value, self.min_value(new_board_state, alpha, beta, depth=depth+1))
             if value >= beta and depth != 0:
-                return value
+                return move, value
             if value >= beta and depth == 0:
                 return move, value
             alpha = max(alpha, value)
             max_values.append(self.min_value(new_board_state, alpha, beta, depth=depth+1))
             if max_values[-1] >= beta and depth != 0:
-                return max_values[-1]
+                return move, max_values[-1]
             if max_values[-1] >= beta and depth==0:
                 return move, max_values[-1]
             alpha = max(alpha, max_values[-1])
@@ -393,12 +393,12 @@ class Othello():
                 best_move = move
         # check how deep we are into the tree, if we are at surface depth, return the best move
         # and the max value of that move, otherwise return the max value we found
-        if depth==0 and max_values:
+        if depth == 0 and max_values:
             return best_move, max(max_values)
         elif depth != 0 and max_values:
-            return max(max_values)
+            return best_move, max(max_values)
         else:
-            return value
+            return (0,0), value
 
     def min_value(self, board_state, alpha, beta, depth=0):
         """ Returns the min value at a specific depth, iteratively calls max_value.
@@ -440,7 +440,8 @@ class Othello():
             y = move[1]
             # create a new board state for every move and find the minimum out of all of them
             new_board_state = self.update_board(x, y, board_state=board_state, turn=turn)
-            value = min(value, self.max_value(new_board_state, alpha, beta, depth=depth+1))
+            move, new_val = self.max_value(new_board_state, alpha, beta, depth=depth+1)
+            value = min(value, new_val)
             if value <= alpha:
                 return value
             beta = min(beta,value)
