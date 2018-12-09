@@ -46,6 +46,12 @@ class Othello():
         else:
             self.AI = b'w'
 
+        if turn == self.AI:
+            moves = self.get_valid_moves()
+            import random
+            rand_index = random.randint(0, len(moves)-1)
+            self.do_turn(moves[rand_index][0], moves[rand_index][1])
+
         print("""Welcome to the Game of Othello! Your configurations are as follows: 
                 1. It is {0}\'s turn first with the AI playing as {1}
                 2. Max depth of the tree for minimax with alpha beta pruning is {2}.
