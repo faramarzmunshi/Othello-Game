@@ -12,9 +12,13 @@ Welcome to the Game of Othello! Your configurations are as follows:
                 turn and once for the AI. Good Luck!
                 
 Requirements for runtime:
+
         Needs Python 3
+        
           Dependencies:
+          
               Numpy for Python 3
+              
               Matplot lib for python 3 for Graphics
 
 
