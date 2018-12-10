@@ -101,7 +101,7 @@ class Othello():
                     self.board_state = self.update_board(x, y)
                     if self.turn == b'b':
                         self.turn = b'w'
-                    else self.turn == b'w':
+                    elif self.turn == b'w':
                         self.turn = b'b'
                     if not self.get_valid_moves():
                     	move = self.get_best_move()
