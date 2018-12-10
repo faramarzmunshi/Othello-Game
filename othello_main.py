@@ -101,8 +101,13 @@ class Othello():
                     self.board_state = self.update_board(x, y)
                     if self.turn == b'b':
                         self.turn = b'w'
-                    else:
+                    else self.turn == b'w':
                         self.turn = b'b'
+                    if not self.get_valid_moves():
+                    	move = self.get_best_move()
+                    	self.turn = self.AI
+                    	if move is not None:
+                    		self.do_turn(move[0], move[1])
                 # If the move is valid, and it's NOT the AI's turn, update the board
                 # with the new move and switch to AI's turn
 
