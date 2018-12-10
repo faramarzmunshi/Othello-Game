@@ -8,7 +8,7 @@ import numpy as np
 
 class Othello():    
     
-    def __init__(self, turn, board_state, AI, MAX_DEPTH=10):
+    def __init__(self, turn, board_state, AI, MAX_DEPTH=18):
         """" Initialize the board and state of the game
             Args:
                 turn: Whether it is white or black's turn
@@ -64,7 +64,10 @@ class Othello():
                 the do_turn(x, y) method where x is the x coordinate, and y is the y
                 coordinate of the move you would like to make.
                 The board will refresh twice every do_turn iteration, once for the human's
-                turn and once for the AI. Good Luck!
+                turn and once for the AI. If the human has no moves left, please do a
+                self.do_turn(0,0)
+
+                Good Luck!
                 """.format(turn, AI, MAX_DEPTH))
     
     def do_turn(self, x, y):
